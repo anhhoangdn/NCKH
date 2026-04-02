@@ -95,7 +95,7 @@ function Show-Help {
     Write-Host "                                         --transcript_jsonl data\interim\lec01\transcript.jsonl"
     Write-Host "  python scripts\05_segment_video.py    --embeddings_npz data\interim\lec01\embeddings.npz --video_id lec01"
     Write-Host "  python scripts\06_build_index.py      --segments_jsonl data\interim\lec01\segments_pred.jsonl --video_id lec01"
-    Write-Host "  python scripts\07_retrieve.py         --index_dir data\interim\lec01 --query `"What is gradient descent?`""
+    Write-Host "  python scripts\07_retrieve.py         --index_dir data\interim\lec01\index --query `"What is gradient descent?`""
     Write-Host ""
 }
 

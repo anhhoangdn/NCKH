@@ -139,7 +139,7 @@ class VideoSegmenter:
         list[dict]
             Each segment dict contains:
             ``start_time``, ``end_time``, ``frame_indices``, ``embedding``
-            (mean-pooled, as a Python list for JSON serialisability).
+            (mean-pooled, as a Python list for JSON serializability).
         """
         if not frames:
             return []

@@ -89,13 +89,17 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
 
 def validate_config(cfg: dict[str, Any]) -> None:
     """Run basic sanity checks on *cfg*.  Raises *ValueError* on problems."""
+    # Named tolerance bounds for embedding-weight sum validation
+    WEIGHT_SUM_MIN: float = 0.99
+    WEIGHT_SUM_MAX: float = 1.01
+
     fps = cfg.get("frame_extraction", {}).get("fps", 0)
     if fps <= 0:
         raise ValueError(f"frame_extraction.fps must be > 0, got {fps}")
 
     weights = cfg.get("embeddings", {}).get("weights", {})
     total = sum(weights.get(k, 0) for k in ("visual", "text", "ocr"))
-    if not (0.99 <= total <= 1.01):
+    if not (WEIGHT_SUM_MIN <= total <= WEIGHT_SUM_MAX):
         raise ValueError(
             f"embeddings.weights must sum to ~1.0, got {total:.3f}. "
             "Adjust visual/text/ocr weights in your config."

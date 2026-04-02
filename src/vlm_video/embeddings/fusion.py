@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import numpy as np
 
+# Minimum L2-norm considered non-zero for safe normalisation.
+NORM_EPSILON: float = 1e-10
+
 
 def _l2_normalize(vec: np.ndarray) -> np.ndarray:
     norm = np.linalg.norm(vec)
-    if norm < 1e-10:
+    if norm < NORM_EPSILON:
         return vec
     return vec / norm
 
@@ -60,7 +63,7 @@ def late_fusion(
 
     # Renormalise weights so they sum to 1
     total_w = sum(w for _, w in pairs)
-    if total_w < 1e-10:
+    if total_w < NORM_EPSILON:
         total_w = 1.0
 
     fused = sum((emb * (w / total_w)) for emb, w in pairs)
