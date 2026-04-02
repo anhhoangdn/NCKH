@@ -61,10 +61,10 @@ def main() -> None:
         else npz_path.parent / "embedding_meta.jsonl"
     )
     meta_records = list(read_jsonl(meta_path)) if meta_path.exists() else []
-    timestamps = [r.get("timestamp_sec", i * (1 / cfg["frame_extraction"]["fps"]))
-                  for i, r in enumerate(meta_records)]
+    fps = cfg["frame_extraction"]["fps"]
+    assert fps > 0, f"frame_extraction.fps must be > 0, got {fps}"
+    timestamps = [r.get("timestamp_sec", i / fps) for i, r in enumerate(meta_records)]
     if not timestamps:
-        fps = cfg["frame_extraction"]["fps"]
         timestamps = [i / fps for i in range(len(embeddings))]
 
     frame_paths = [r.get("frame_path", "") for r in meta_records]

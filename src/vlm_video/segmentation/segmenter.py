@@ -153,7 +153,6 @@ class VideoSegmenter:
 
         # Build segment list from boundary indices
         boundary_set = set(boundaries)
-        start_idx = 0
         raw_segments: list[dict[str, Any]] = []
 
         split_points = sorted(boundary_set | {len(frames)})
@@ -178,7 +177,6 @@ class VideoSegmenter:
                 }
             )
             prev = bp
-            start_idx = bp
 
         merged = merge_segments(raw_segments, embeddings, self.merge_sim_threshold)
         logger.info("Final segment count after merging: %d", len(merged))
