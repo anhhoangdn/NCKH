@@ -1,0 +1,17 @@
+# configs/segmentation/clip_latefusion.yaml
+# CLIP late-fusion segmentation: combines visual, ASR-text, and optional OCR embeddings
+# Override values from configs/default.yaml segmentation section as needed.
+
+segmentation:
+  method: "clip_latefusion"
+  threshold: 0.4
+  adaptive_percentile: 85
+  min_duration: 5
+  smooth_window: 3
+  merge_sim_threshold: 0.9
+
+embeddings:
+  weights:
+    visual: 0.6
+    text:   0.3
+    ocr:    0.1

@@ -1,0 +1,8 @@
+# configs/retrieval/index_default.yaml
+# Default sklearn cosine-similarity retrieval index configuration.
+
+retrieval:
+  backend: "sklearn"
+  metric: "cosine"      # cosine | euclidean | dot
+  top_k: 5
+  normalize_embeddings: true

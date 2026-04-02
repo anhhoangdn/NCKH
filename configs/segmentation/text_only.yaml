@@ -1,0 +1,23 @@
+# configs/segmentation/text_only.yaml
+# Text-only (ASR transcript) segmentation baseline.
+# Uses a sliding-window over transcript segments; no visual embeddings.
+
+segmentation:
+  method: "text_only"
+  window_sec: 60          # sliding-window width in seconds
+  min_duration: 10        # minimum segment duration
+
+asr:
+  model: "base"
+  language: "vi"
+  device: "cpu"
+  compute_type: "int8"
+  beam_size: 5
+  vad_filter: true
+
+# Embeddings are not used for this baseline
+embeddings:
+  weights:
+    visual: 0.0
+    text:   1.0
+    ocr:    0.0
