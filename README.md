@@ -39,7 +39,7 @@ Then restart your terminal so `ffmpeg` is on PATH.
 
 ```powershell
 # 1. Clone the repo
-git clone https://github.com/<your-org>/NCKH.git
+git clone https://github.com/anhhoangdn/NCKH
 cd NCKH
 
 # 2. Create venv and install
@@ -53,21 +53,6 @@ cd NCKH
 Copy-Item .env.example .env
 notepad .env
 ```
-
----
-
-## Linux / macOS quickstart
-
-```bash
-git clone https://github.com/<your-org>/NCKH.git
-cd NCKH
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-cp .env.example .env
-```
-
----
 
 ## Installation
 
@@ -235,7 +220,7 @@ If you use this code in your research, please cite:
   title  = {Optimizing Segmentation and Event Retrieval in Syllabus Videos using VLMs},
   author = {NCKH Research Team},
   year   = {2024},
-  url    = {https://github.com/<your-org>/NCKH}
+  url    = {https://github.com/anhhoangdn/NCKH}
 }
 ```
 
