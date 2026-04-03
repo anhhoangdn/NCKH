@@ -108,7 +108,7 @@ python scripts/05_segment_video.py --embeddings_npz data/interim/lec01/embedding
 
 python scripts/06_build_index.py --segments_jsonl data/interim/lec01/segments_pred.jsonl --video_id lec01
 
-python scripts/07_retrieve.py --index_dir data/interim/lec01/index --query "What is ... ?"
+python scripts/07_retrieve.py --index_dir data/interim/lec01/index --query "What is ENCAPSULATION ?"
 ```
 
 Or use the single-command pipeline:
