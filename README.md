@@ -43,6 +43,7 @@ git clone https://github.com/anhhoangdn/NCKH
 cd NCKH
 
 # 2. Create venv and install
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 run.bat setup
 run.bat install
 
