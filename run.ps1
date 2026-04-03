@@ -91,7 +91,7 @@ function Show-Help {
     Write-Host "  python scripts\01_extract_frames.py --input_video data\raw\lecture.mp4 --video_id lec01"
     Write-Host "  python scripts\02_run_asr.py         --input_video data\raw\lecture.mp4 --video_id lec01"
     Write-Host "  python scripts\03_run_ocr.py          --frames_dir data\interim\lec01\frames --video_id lec01"
-    Write-Host "  python scripts\04_build_embeddings.py --frames_dir data\interim\lec01\frames --video_id lec01 \"
+    Write-Host "  python scripts\04_build_embeddings.py --frames_dir data\interim\lec01\frames --video_id lec01"
     Write-Host "                                         --transcript_jsonl data\interim\lec01\transcript.jsonl"
     Write-Host "  python scripts\05_segment_video.py    --embeddings_npz data\interim\lec01\embeddings.npz --video_id lec01"
     Write-Host "  python scripts\06_build_index.py      --segments_jsonl data\interim\lec01\segments_pred.jsonl --video_id lec01"
