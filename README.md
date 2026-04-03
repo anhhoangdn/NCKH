@@ -53,6 +53,10 @@ run.bat install
 # 4. Copy and edit environment variables (optional)
 Copy-Item .env.example .env
 notepad .env
+
+#5. Cài vlm_video
+python -m pip install --upgrade pip
+python -m pip install -e .
 ```
 
 ## Installation
