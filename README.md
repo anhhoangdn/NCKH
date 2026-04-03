@@ -1,6 +1,6 @@
 # Optimizing Segmentation and Event Retrieval in Syllabus Videos using Vision-Language Models (VLM)
 
-> **NCKH Research Project** — Automatic lecture-video segmentation and semantic retrieval using CLIP, Whisper ASR, and optional OCR.
+> **Research Project** — Automatic lecture-video segmentation and semantic retrieval using CLIP, Whisper ASR, and optional OCR.
 
 ---
 
