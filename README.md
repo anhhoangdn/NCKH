@@ -94,28 +94,17 @@ pip install -e ".[faiss]"
 # Put your lecture video in data/raw/
 # Then run each pipeline step:
 
-python scripts/01_extract_frames.py \
-    --input_video data/raw/lec01.mp4 --video_id lec01
+python scripts/01_extract_frames.py --input_video data/raw/lec01.mp4 --video_id lec01
 
-python scripts/02_run_asr.py \
-    --input_video data/raw/lec01.mp4 --video_id lec01
+python scripts/02_run_asr.py --input_video data/raw/lec01.mp4 --video_id lec01
 
-python scripts/04_build_embeddings.py \
-    --frames_dir data/interim/lec01/frames \
-    --transcript_jsonl data/interim/lec01/transcript.jsonl \
-    --video_id lec01
+python scripts/04_build_embeddings.py --frames_dir data/interim/lec01/frames --transcript_jsonl data/interim/lec01/transcript.jsonl --video_id lec01
 
-python scripts/05_segment_video.py \
-    --embeddings_npz data/interim/lec01/embeddings.npz \
-    --video_id lec01
+python scripts/05_segment_video.py --embeddings_npz data/interim/lec01/embeddings.npz --video_id lec01
 
-python scripts/06_build_index.py \
-    --segments_jsonl data/interim/lec01/segments_pred.jsonl \
-    --video_id lec01
+python scripts/06_build_index.py --segments_jsonl data/interim/lec01/segments_pred.jsonl --video_id lec01
 
-python scripts/07_retrieve.py \
-    --index_dir data/interim/lec01/index \
-    --query "What is gradient descent?"
+python scripts/07_retrieve.py --index_dir data/interim/lec01/index --query "What is ... ?"
 ```
 
 Or use the single-command pipeline:
