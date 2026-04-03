@@ -217,10 +217,10 @@ ruff check src/ scripts/ tests/
 If you use this code in your research, please cite:
 
 ```bibtex
-@misc{nckh2024vlm,
+@misc{nckh2026vlm,
   title  = {Optimizing Segmentation and Event Retrieval in Syllabus Videos using VLMs},
   author = {NCKH Research Team},
-  year   = {2024},
+  year   = {2026},
   url    = {https://github.com/anhhoangdn/NCKH}
 }
 ```
