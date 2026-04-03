@@ -35,7 +35,7 @@ Then restart your terminal so `ffmpeg` is on PATH.
 
 ---
 
-## Windows quickstart (PowerShell)
+## Windows quickstart 
 
 ```powershell
 # 1. Clone the repo
@@ -43,8 +43,8 @@ git clone https://github.com/anhhoangdn/NCKH
 cd NCKH
 
 # 2. Create venv and install
-.\run.ps1 setup
-.\run.ps1 install
+run.bat setup
+run.bat install
 
 # 3. Activate the environment
 .venv\Scripts\Activate.ps1
