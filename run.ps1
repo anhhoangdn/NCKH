@@ -1,109 +1,138 @@
-# run.ps1 — Windows PowerShell helper for vlm_video research project
-# Usage:  .\run.ps1 [setup|install|test|lint|help]
-# Requires: Python 3.11+, winget or choco (optional for ffmpeg)
+@echo off
+setlocal enabledelayedexpansion
 
-param(
-    [Parameter(Position=0)]
-    [string]$Command = "help"
+REM run.bat — Windows CMD helper for vlm_video research project
+REM Usage: run.bat [setup|install|test|lint|ffmpeg|help]
+
+set "CMD=%~1"
+if "%CMD%"=="" set "CMD=help"
+
+set "VENV_DIR=.venv"
+set "PYTHON=python"
+
+goto :main
+
+:header
+echo.
+echo ==> %~1
+goto :eof
+
+:assert_python
+%PYTHON% --version >nul 2>&1
+if errorlevel 1 (
+  echo [ERROR] Python not found. Install from https://www.python.org/downloads/
+  exit /b 1
 )
+for /f "delims=" %%v in ('%PYTHON% --version 2^>^&1') do echo Found: %%v
+goto :eof
 
-$VENV_DIR = ".venv"
-$PYTHON   = "python"
+:ensure_venv
+if not exist "%VENV_DIR%\Scripts\python.exe" (
+  echo [ERROR] Virtual environment "%VENV_DIR%" not found. Run: run.bat setup
+  exit /b 1
+)
+goto :eof
 
-function Write-Header($msg) {
-    Write-Host ""
-    Write-Host "==> $msg" -ForegroundColor Cyan
-}
+:setup_venv
+call :header "Creating virtual environment in %VENV_DIR%"
+call :assert_python || exit /b 1
 
-function Assert-Python {
-    try {
-        $ver = & $PYTHON --version 2>&1
-        Write-Host "Found: $ver"
-    } catch {
-        Write-Error "Python not found. Install from https://www.python.org/downloads/"
-        exit 1
-    }
-}
+if not exist "%VENV_DIR%\Scripts\python.exe" (
+  %PYTHON% -m venv "%VENV_DIR%"
+  if errorlevel 1 (
+    echo [ERROR] Failed to create virtual environment.
+    exit /b 1
+  )
+  echo Virtual environment created.
+) else (
+  echo Virtual environment already exists, skipping creation.
+)
+goto :eof
 
-function Setup-Venv {
-    Write-Header "Creating virtual environment in $VENV_DIR"
-    Assert-Python
-    if (-not (Test-Path $VENV_DIR)) {
-        & $PYTHON -m venv $VENV_DIR
-        Write-Host "Virtual environment created." -ForegroundColor Green
-    } else {
-        Write-Host "Virtual environment already exists, skipping creation."
-    }
-}
+:install_package
+call :header "Installing vlm_video package (dev dependencies)"
+call :ensure_venv || exit /b 1
 
-function Install-Package {
-    Write-Header "Installing vlm_video package (CPU extras)"
-    $pip = "$VENV_DIR\Scripts\pip.exe"
-    & $pip install --upgrade pip
-    & $pip install -e ".[dev]"
-    Write-Host ""
-    Write-Host "Optional extras:" -ForegroundColor Yellow
-    Write-Host "  OCR support : $pip install -e '.[ocr]'"
-    Write-Host "  FAISS index : $pip install -e '.[faiss]'"
-    Write-Host ""
-    Write-Host "Package installed." -ForegroundColor Green
-}
+"%VENV_DIR%\Scripts\pip.exe" install --upgrade pip
+if errorlevel 1 exit /b 1
 
-function Show-FfmpegHint {
-    Write-Header "FFmpeg installation hint (Windows)"
-    Write-Host "  winget : winget install ffmpeg" -ForegroundColor Yellow
-    Write-Host "  choco  : choco install ffmpeg" -ForegroundColor Yellow
-    Write-Host "  manual : https://www.gyan.dev/ffmpeg/builds/" -ForegroundColor Yellow
-    Write-Host "  After installing, make sure ffmpeg.exe is in your PATH."
-}
+"%VENV_DIR%\Scripts\pip.exe" install -e ".[dev]"
+if errorlevel 1 exit /b 1
 
-function Run-Tests {
-    Write-Header "Running tests"
-    $pytest = "$VENV_DIR\Scripts\pytest.exe"
-    & $pytest tests/ -v
-}
+echo.
+echo Optional extras:
+echo   OCR support : "%VENV_DIR%\Scripts\pip.exe" install -e ".[ocr]"
+echo   FAISS index : "%VENV_DIR%\Scripts\pip.exe" install -e ".[faiss]"
+echo.
+echo Package installed.
+goto :eof
 
-function Run-Lint {
-    Write-Header "Running ruff linter"
-    $ruff = "$VENV_DIR\Scripts\ruff.exe"
-    & $ruff check src/ scripts/ tests/
-}
+:run_tests
+call :header "Running tests"
+call :ensure_venv || exit /b 1
 
-function Show-Help {
-    Write-Host ""
-    Write-Host "vlm_video research project — PowerShell helper" -ForegroundColor Cyan
-    Write-Host "Usage: .\run.ps1 [command]"
-    Write-Host ""
-    Write-Host "Commands:" -ForegroundColor Yellow
-    Write-Host "  setup    Create Python virtual environment"
-    Write-Host "  install  Install package and dev dependencies into venv"
-    Write-Host "  test     Run pytest test suite"
-    Write-Host "  lint     Run ruff linter"
-    Write-Host "  ffmpeg   Show Windows ffmpeg install instructions"
-    Write-Host "  help     Show this help message (default)"
-    Write-Host ""
-    Write-Host "Quick start:" -ForegroundColor Green
-    Write-Host "  .\run.ps1 setup"
-    Write-Host "  .\run.ps1 install"
-    Write-Host "  .venv\Scripts\Activate.ps1"
-    Write-Host ""
-    Write-Host "End-to-end pipeline (single video):" -ForegroundColor Green
-    Write-Host "  python scripts\01_extract_frames.py --input_video data\raw\lecture.mp4 --video_id lec01"
-    Write-Host "  python scripts\02_run_asr.py         --input_video data\raw\lecture.mp4 --video_id lec01"
-    Write-Host "  python scripts\03_run_ocr.py          --frames_dir data\interim\lec01\frames --video_id lec01"
-    Write-Host "  python scripts\04_build_embeddings.py --frames_dir data\interim\lec01\frames --video_id lec01"
-    Write-Host "                                         --transcript_jsonl data\interim\lec01\transcript.jsonl"
-    Write-Host "  python scripts\05_segment_video.py    --embeddings_npz data\interim\lec01\embeddings.npz --video_id lec01"
-    Write-Host "  python scripts\06_build_index.py      --segments_jsonl data\interim\lec01\segments_pred.jsonl --video_id lec01"
-    Write-Host "  python scripts\07_retrieve.py         --index_dir data\interim\lec01\index --query `"What is gradient descent?`""
-    Write-Host ""
-}
+if not exist "%VENV_DIR%\Scripts\pytest.exe" (
+  echo [ERROR] pytest not found. Run: run.bat install
+  exit /b 1
+)
+"%VENV_DIR%\Scripts\pytest.exe" tests/ -v
+exit /b %errorlevel%
 
-switch ($Command.ToLower()) {
-    "setup"   { Setup-Venv }
-    "install" { Setup-Venv; Install-Package }
-    "test"    { Run-Tests }
-    "lint"    { Run-Lint }
-    "ffmpeg"  { Show-FfmpegHint }
-    default   { Show-Help }
-}
+:run_lint
+call :header "Running ruff linter"
+call :ensure_venv || exit /b 1
+
+if not exist "%VENV_DIR%\Scripts\ruff.exe" (
+  echo [ERROR] ruff not found. Run: run.bat install
+  exit /b 1
+)
+"%VENV_DIR%\Scripts\ruff.exe" check src/ scripts/ tests/
+exit /b %errorlevel%
+
+:ffmpeg_hint
+call :header "FFmpeg installation hint (Windows)"
+echo   winget : winget install ffmpeg
+echo   choco  : choco install ffmpeg
+echo   manual : https://www.gyan.dev/ffmpeg/builds/
+echo   After installing, make sure ffmpeg.exe is in your PATH.
+goto :eof
+
+:show_help
+echo.
+echo vlm_video research project — CMD helper
+echo Usage: run.bat [command]
+echo.
+echo Commands:
+echo   setup    Create Python virtual environment
+echo   install  Install package and dev dependencies into venv
+echo   test     Run pytest test suite
+echo   lint     Run ruff linter
+echo   ffmpeg   Show Windows ffmpeg install instructions
+echo   help     Show this help message (default)
+echo.
+echo Quick start:
+echo   run.bat setup
+echo   run.bat install
+echo   .venv\Scripts\activate.bat
+echo.
+echo End-to-end pipeline (single video):
+echo   python scripts\01_extract_frames.py --input_video data\raw\lecture.mp4 --video_id lec01
+echo   python scripts\02_run_asr.py         --input_video data\raw\lecture.mp4 --video_id lec01
+echo   python scripts\03_run_ocr.py         --frames_dir data\interim\lec01\frames --video_id lec01
+echo   python scripts\04_build_embeddings.py --frames_dir data\interim\lec01\frames --video_id lec01 --transcript_jsonl data\interim\lec01\transcript.jsonl
+echo   python scripts\05_segment_video.py    --embeddings_npz data\interim\lec01\embeddings.npz --video_id lec01
+echo   python scripts\06_build_index.py      --segments_jsonl data\interim\lec01\segments_pred.jsonl --video_id lec01
+echo   python scripts\07_retrieve.py         --index_dir data\interim\lec01\index --query "What is gradient descent?"
+goto :eof
+
+:main
+if /i "%CMD%"=="setup"   (call :setup_venv & exit /b %errorlevel%)
+if /i "%CMD%"=="install" (call :setup_venv & if errorlevel 1 exit /b 1 & call :install_package & exit /b %errorlevel%)
+if /i "%CMD%"=="test"    (call :run_tests)
+if /i "%CMD%"=="lint"    (call :run_lint)
+if /i "%CMD%"=="ffmpeg"  (call :ffmpeg_hint & exit /b %errorlevel%)
+if /i "%CMD%"=="help"    (call :show_help & exit /b 0)
+
+echo [ERROR] Unknown command: %CMD%
+call :show_help
+exit /b 1
