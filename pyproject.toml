@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vlm_video"
+version = "0.1.0"
+description = "Optimizing Segmentation and Event Retrieval in Syllabus Videos using Vision-Language Models"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "NCKH Research Team" }]
+keywords = ["video", "segmentation", "retrieval", "VLM", "CLIP", "education"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "open_clip_torch>=2.24.0",
+    "faster-whisper>=1.0.0",
+    "scikit-learn>=1.4.0",
+    "numpy>=1.26.0",
+    "opencv-python-headless>=4.9.0",
+    "Pillow>=10.0.0",
+    "pyyaml>=6.0",
+    "tqdm>=4.66.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4.0", "mypy>=1.10.0"]
+ocr = ["pytesseract>=0.3.10"]
+faiss = ["faiss-cpu>=1.8.0"]
+
+[project.scripts]
+vlm-pipeline = "vlm_video.pipelines.run_all:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "scripts", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"

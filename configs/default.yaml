@@ -1,0 +1,64 @@
+# ── Video source settings ─────────────────────────────────────────────────────
+video:
+  supported_extensions: [".mp4", ".avi", ".mkv", ".mov", ".webm"]
+  max_duration_sec: 7200  # 2 hours
+
+# ── Frame extraction ──────────────────────────────────────────────────────────
+frame_extraction:
+  fps: 0.5          # frames per second to extract (0.5 = 1 frame every 2 s)
+  format: "jpg"
+  quality: 90       # JPEG quality (1-95)
+  max_dim: 512      # resize longest side to this if larger (0 = no resize)
+
+# ── Automatic Speech Recognition ─────────────────────────────────────────────
+asr:
+  model: "base"        # tiny | base | small | medium | large-v2 | large-v3
+  language: "vi"       # ISO-639 language code; null for auto-detect
+  device: "cpu"
+  compute_type: "int8" # int8 | float16 | float32
+  beam_size: 5
+  vad_filter: true
+
+# ── OCR (optional) ────────────────────────────────────────────────────────────
+ocr:
+  enabled: false
+  lang: "vie+eng"     # Tesseract language string
+  psm: 3              # Tesseract page segmentation mode
+
+# ── Embeddings ────────────────────────────────────────────────────────────────
+embeddings:
+  model: "ViT-B-32"
+  pretrained: "laion2b_s34b_b79k"
+  device: "cpu"
+  batch_size: 32
+  weights:
+    visual: 0.6
+    text:   0.3
+    ocr:    0.1
+
+# ── Segmentation ─────────────────────────────────────────────────────────────
+segmentation:
+  method: "clip_latefusion"    # clip_latefusion | text_only | fixed_window | shot_change
+  threshold: 0.4               # cosine-change threshold for boundary detection
+  adaptive_percentile: 85      # percentile for adaptive threshold
+  min_duration: 5              # minimum segment duration in seconds
+  smooth_window: 3             # sliding-window smoothing kernel size (frames)
+  merge_sim_threshold: 0.9     # cosine similarity threshold for merging adjacent segments
+
+# ── Retrieval ─────────────────────────────────────────────────────────────────
+retrieval:
+  backend: "sklearn"   # sklearn | faiss
+  top_k: 5
+  metric: "cosine"
+
+# ── Evaluation ────────────────────────────────────────────────────────────────
+evaluation:
+  tolerance_sec: [5, 10]          # boundary-matching tolerances in seconds
+  retrieval_k_values: [1, 3, 5]   # k values for Recall@k
+
+# ── Output ────────────────────────────────────────────────────────────────────
+output:
+  base_dir: "outputs/runs"
+  save_embeddings: true
+  save_segments: true
+  save_index: true

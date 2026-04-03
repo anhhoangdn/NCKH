@@ -1,0 +1,10 @@
+# configs/retrieval/index_faiss.yaml
+# FAISS retrieval index configuration.
+# Requires: pip install vlm_video[faiss]
+
+retrieval:
+  backend: "faiss"
+  index_type: "IndexFlatIP"   # IndexFlatIP (exact inner product) | IndexIVFFlat | IndexHNSWFlat
+  nprobe: 10                  # number of cells to visit during search (IVF indexes)
+  top_k: 5
+  normalize_embeddings: true  # normalize before IndexFlatIP for cosine similarity
