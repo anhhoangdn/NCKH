@@ -35,6 +35,7 @@ _DEFAULTS: dict[str, Any] = {
         "threshold": 0.4,
         "adaptive_percentile": 85,
         "min_duration": 5,
+        "min_segment_duration": 30,
         "smooth_window": 3,
         "merge_sim_threshold": 0.9,
     },

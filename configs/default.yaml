@@ -42,6 +42,7 @@ segmentation:
   threshold: 0.4               # cosine-change threshold for boundary detection
   adaptive_percentile: 85      # percentile for adaptive threshold
   min_duration: 5              # minimum segment duration in seconds
+  min_segment_duration: 30     # merge segments shorter than this (seconds)
   smooth_window: 3             # sliding-window smoothing kernel size (frames)
   merge_sim_threshold: 0.9     # cosine similarity threshold for merging adjacent segments
 

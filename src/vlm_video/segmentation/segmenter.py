@@ -5,16 +5,17 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+from scipy.ndimage import gaussian_filter1d
 
 from vlm_video.common.logging_utils import get_logger
 from vlm_video.embeddings.clip_encoder import CLIPEncoder
 from vlm_video.embeddings.fusion import late_fusion
 from vlm_video.segmentation.change_score import cosine_change_score, smooth_scores
 from vlm_video.segmentation.thresholding import (
-    adaptive_threshold,
     enforce_min_duration,
-    fixed_threshold,
+    merge_short_segments,
     merge_segments,
+    otsu_threshold,
 )
 
 logger = get_logger(__name__)
@@ -36,6 +37,7 @@ class VideoSegmenter:
         self.threshold: float = seg_cfg.get("threshold", 0.4)
         self.adaptive_percentile: float = seg_cfg.get("adaptive_percentile", 85)
         self.min_duration: float = seg_cfg.get("min_duration", 5)
+        self.min_segment_duration: float = seg_cfg.get("min_segment_duration", 30)
         self.smooth_window: int = seg_cfg.get("smooth_window", 3)
         self.merge_sim_threshold: float = seg_cfg.get("merge_sim_threshold", 0.9)
 
@@ -101,11 +103,9 @@ class VideoSegmenter:
     ) -> list[int]:
         scores = cosine_change_score(embeddings)
         scores = smooth_scores(scores, window=self.smooth_window)
+        scores = gaussian_filter1d(scores, sigma=2)
 
-        if self.method == "clip_latefusion":
-            boundaries = adaptive_threshold(scores, self.adaptive_percentile)
-        else:
-            boundaries = fixed_threshold(scores, self.threshold)
+        boundaries = otsu_threshold(scores)
 
         boundaries = enforce_min_duration(boundaries, timestamps, self.min_duration)
         return boundaries
@@ -178,6 +178,7 @@ class VideoSegmenter:
             )
             prev = bp
 
+        raw_segments = merge_short_segments(raw_segments, self.min_segment_duration)
         merged = merge_segments(raw_segments, embeddings, self.merge_sim_threshold)
         logger.info("Final segment count after merging: %d", len(merged))
 
