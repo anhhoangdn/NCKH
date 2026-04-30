@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 
 
-def fixed_threshold(scores: np.ndarray, threshold: float = 0.4) -> list[int]:
+def fixed_threshold(scores: np.ndarray, threshold: float) -> list[int]:
     """Return frame indices where the change score exceeds *threshold*.
 
     Parameters
@@ -24,6 +24,25 @@ def fixed_threshold(scores: np.ndarray, threshold: float = 0.4) -> list[int]:
         Sorted list of frame indices that are segment boundaries.
     """
     return [int(i) for i in np.where(scores > threshold)[0]]
+
+
+def otsu_threshold(scores: np.ndarray) -> list[int]:
+    """Return frame indices where the score exceeds an Otsu-derived threshold.
+
+    Falls back to mean + 0.5 * std if Otsu computation fails.
+    """
+    if len(scores) == 0:
+        return []
+    try:
+        from skimage.filters import threshold_otsu
+
+        thresh = float(threshold_otsu(scores))
+        if np.isnan(thresh):
+            raise ValueError("Otsu threshold returned NaN.")
+    except Exception:
+        thresh = float(np.mean(scores) + 0.5 * np.std(scores))
+
+    return fixed_threshold(scores, threshold=thresh)
 
 
 def adaptive_threshold(scores: np.ndarray, percentile: float = 85) -> list[int]:
@@ -84,6 +103,45 @@ def enforce_min_duration(
             last_time = t
 
     return filtered
+
+
+def merge_short_segments(
+    segments: list[dict[str, Any]],
+    min_duration_sec: float,
+) -> list[dict[str, Any]]:
+    """Merge segments shorter than *min_duration_sec* with an adjacent neighbor."""
+    if len(segments) <= 1:
+        return segments
+
+    merged: list[dict[str, Any]] = []
+    i = 0
+    while i < len(segments):
+        seg = segments[i]
+        duration = float(seg.get("end_time", 0.0) - seg.get("start_time", 0.0))
+
+        if duration >= min_duration_sec:
+            merged.append(seg)
+            i += 1
+            continue
+
+        if merged:
+            prev = merged[-1]
+            prev["end_time"] = seg["end_time"]
+            prev["frame_indices"] = prev["frame_indices"] + seg["frame_indices"]
+            i += 1
+            continue
+
+        if i + 1 < len(segments):
+            nxt = segments[i + 1]
+            nxt["start_time"] = seg["start_time"]
+            nxt["frame_indices"] = seg["frame_indices"] + nxt["frame_indices"]
+            i += 1
+            continue
+
+        merged.append(seg)
+        i += 1
+
+    return merged
 
 
 def merge_segments(
