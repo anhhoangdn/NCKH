@@ -137,7 +137,7 @@ Results are re-ranked using a weighted combination of semantic similarity and ke
 
 ### LLM reranking with Claude
 
-For higher-precision retrieval, pass `--rerank` to `07_retrieve.py` to call the Anthropic Claude API (Haiku model) as a second-stage reranker:
+For higher-precision retrieval, pass `--rerank` to `07_retrieve.py` to call the Anthropic Claude API as a second-stage reranker:
 
 ```bash
 python scripts/07_retrieve.py \
