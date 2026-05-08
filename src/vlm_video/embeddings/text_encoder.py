@@ -75,7 +75,7 @@ class TextEncoder:
             attention_mask = torch.ones(hidden.shape[:2], device=hidden.device)
         mask = attention_mask.unsqueeze(-1).float()
         summed = (hidden * mask).sum(dim=1)
-        counts = mask.sum(dim=1).clamp(min=1e-9)
+        counts = mask.sum(dim=1).clamp(min=1.0)
         return summed / counts
 
     def encode(self, text: str) -> np.ndarray:
