@@ -30,9 +30,9 @@ dependencies = [
     "scikit-image>=0.23.0",
     "scipy>=1.11.0",
     "sentence-transformers>=2.6.0",
-    "torch>=2.2.0",
+    "torch>=2.6.0",
     "tqdm>=4.66.0",
-    "transformers>=4.40.0",
+    "transformers>=4.48.0",
     "ruptures>=1.1.9",
 ]
 
