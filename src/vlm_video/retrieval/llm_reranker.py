@@ -30,6 +30,13 @@ class LLMReranker:
         if not self.api_key:
             raise RuntimeError("ANTHROPIC_API_KEY is required for LLM reranking.")
 
+        # Inject positional segment_id for any candidate that lacks one
+        injected: set[str] = set()
+        for i, cand in enumerate(candidates):
+            if cand.get("segment_id") is None:
+                cand["segment_id"] = i
+                injected.add(str(i))
+
         prompt = self._build_prompt(query, candidates)
         response_text = self._call_claude(prompt)
         try:
@@ -40,12 +47,18 @@ class LLMReranker:
         ordered = self._order_candidates(candidates, ordered_ids)
         for i, cand in enumerate(ordered):
             cand["score"] = max(0.0, 1.0 - 0.1 * i)
+
+        # Clean up injected keys so we don't pollute downstream consumers
+        for cand in ordered:
+            if str(cand.get("segment_id")) in injected:
+                del cand["segment_id"]
+
         return ordered
 
     def _build_prompt(self, query: str, candidates: list[dict[str, Any]]) -> str:
         lines = []
-        for cand in candidates:
-            seg_id = cand.get("segment_id")
+        for i, cand in enumerate(candidates):
+            seg_id = cand.get("segment_id") if cand.get("segment_id") is not None else i
             transcript = cand.get("transcript") or cand.get("asr_text") or ""
             lines.append(f"- {seg_id}: {transcript}")
         segments_block = "\n".join(lines)
