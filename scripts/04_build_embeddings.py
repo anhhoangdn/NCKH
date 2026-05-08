@@ -13,6 +13,7 @@ from vlm_video.common.io_jsonl import read_jsonl, write_jsonl
 from vlm_video.common.logging_utils import get_logger
 from vlm_video.embeddings.clip_encoder import CLIPEncoder
 from vlm_video.embeddings.fusion import late_fusion
+from vlm_video.embeddings.text_encoder import TextEncoder
 
 logger = get_logger(__name__)
 
@@ -91,6 +92,13 @@ def main() -> None:
         pretrained=emb_cfg["pretrained"],
         device=emb_cfg.get("device", "cpu"),
     )
+    text_encoder = TextEncoder(
+        encoder_type=emb_cfg.get("text_encoder", "clip"),
+        clip_encoder=encoder,
+        clip_model_name=emb_cfg["model"],
+        clip_pretrained=emb_cfg["pretrained"],
+        device=emb_cfg.get("device", "cpu"),
+    )
 
     emb_list: list[np.ndarray] = []
     meta_list: list[dict[str, Any]] = []
@@ -102,12 +110,12 @@ def main() -> None:
         txt_emb = None
         txt = text_at(t, transcripts)
         if txt and wt > 0:
-            txt_emb = encoder.encode_text(txt)
+            txt_emb = text_encoder.encode(txt)
 
         ocr_emb = None
         ocr_text = ocr_map.get(i, "")
         if ocr_text and wo > 0:
-            ocr_emb = encoder.encode_text(ocr_text)
+            ocr_emb = text_encoder.encode(ocr_text)
 
         fused = late_fusion(vis, txt_emb, ocr_emb, wv, wt, wo)
         emb_list.append(fused)

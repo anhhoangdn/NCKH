@@ -10,6 +10,7 @@ from scipy.ndimage import gaussian_filter1d
 from vlm_video.common.logging_utils import get_logger
 from vlm_video.embeddings.clip_encoder import CLIPEncoder
 from vlm_video.embeddings.fusion import late_fusion
+from vlm_video.embeddings.text_encoder import TextEncoder
 from vlm_video.segmentation.change_score import cosine_change_score, smooth_scores
 from vlm_video.segmentation.thresholding import (
     enforce_min_duration,
@@ -46,8 +47,15 @@ class VideoSegmenter:
 
         emb_cfg = config.get("embeddings", {})
         self.encoder = CLIPEncoder(
-            model_name=emb_cfg.get("model", "ViT-B-32"),
-            pretrained=emb_cfg.get("pretrained", "laion2b_s34b_b79k"),
+            model_name=emb_cfg.get("model", "ViT-L-14"),
+            pretrained=emb_cfg.get("pretrained", "laion2b_s32b_b82k"),
+            device=emb_cfg.get("device", "cpu"),
+        )
+        self.text_encoder = TextEncoder(
+            encoder_type=emb_cfg.get("text_encoder", "clip"),
+            clip_encoder=self.encoder,
+            clip_model_name=emb_cfg.get("model", "ViT-L-14"),
+            clip_pretrained=emb_cfg.get("pretrained", "laion2b_s32b_b82k"),
             device=emb_cfg.get("device", "cpu"),
         )
         w = emb_cfg.get("weights", {})
@@ -77,14 +85,14 @@ class VideoSegmenter:
             if transcripts and self.wt > 0:
                 text = self._text_at(t, transcripts)
                 if text:
-                    text_emb = self.encoder.encode_text(text)
+                    text_emb = self.text_encoder.encode(text)
 
             # OCR
             ocr_emb = None
             if ocr_texts and i < len(ocr_texts) and self.wo > 0:
                 ot = ocr_texts[i]
                 if ot:
-                    ocr_emb = self.encoder.encode_text(ot)
+                    ocr_emb = self.text_encoder.encode(ot)
 
             fused = late_fusion(vis_emb, text_emb, ocr_emb, self.wv, self.wt, self.wo)
             emb_list.append(fused)
@@ -214,5 +222,16 @@ class VideoSegmenter:
                 m = embeddings[idxs].mean(axis=0)
                 norm = np.linalg.norm(m)
                 seg["embedding"] = (m / norm if norm > 1e-10 else m).tolist()
+
+        if transcripts:
+            for seg in merged:
+                start = seg.get("start_time", 0.0)
+                end = seg.get("end_time", 0.0)
+                parts = [
+                    t.get("text", "")
+                    for t in transcripts
+                    if t.get("end", 0.0) >= start and t.get("start", 0.0) <= end
+                ]
+                seg["transcript"] = " ".join(p for p in parts if p).strip()
 
         return merged

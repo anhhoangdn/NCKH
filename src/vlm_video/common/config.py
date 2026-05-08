@@ -13,9 +13,9 @@ import yaml
 # ── Defaults (lowest priority) ────────────────────────────────────────────────
 _DEFAULTS: dict[str, Any] = {
     "video": {"supported_extensions": [".mp4", ".avi", ".mkv", ".mov", ".webm"]},
-    "frame_extraction": {"fps": 0.5, "format": "jpg", "quality": 90, "max_dim": 512},
+    "frame_extraction": {"fps": 1.0, "format": "jpg", "quality": 90, "max_dim": 512},
     "asr": {
-        "model": "base",
+        "model": "large-v3",
         "language": "vi",
         "device": "cpu",
         "compute_type": "int8",
@@ -24,8 +24,9 @@ _DEFAULTS: dict[str, Any] = {
     },
     "ocr": {"enabled": False, "lang": "vie+eng", "psm": 3},
     "embeddings": {
-        "model": "ViT-B-32",
-        "pretrained": "laion2b_s34b_b79k",
+        "model": "ViT-L-14",
+        "pretrained": "laion2b_s32b_b82k",
+        "text_encoder": "clip",
         "device": "cpu",
         "batch_size": 32,
         "weights": {"visual": 0.6, "text": 0.3, "ocr": 0.1},
@@ -39,7 +40,12 @@ _DEFAULTS: dict[str, Any] = {
         "smooth_window": 3,
         "merge_sim_threshold": 0.9,
     },
-    "retrieval": {"backend": "sklearn", "top_k": 5, "metric": "cosine"},
+    "retrieval": {
+        "backend": "sklearn",
+        "top_k": 5,
+        "metric": "cosine",
+        "use_llm_rerank": False,
+    },
     "evaluation": {"tolerance_sec": [5, 10], "retrieval_k_values": [1, 3, 5]},
     "output": {
         "base_dir": "outputs/runs",
@@ -104,6 +110,12 @@ def validate_config(cfg: dict[str, Any]) -> None:
         raise ValueError(
             f"embeddings.weights must sum to ~1.0, got {total:.3f}. "
             "Adjust visual/text/ocr weights in your config."
+        )
+    text_encoder = cfg.get("embeddings", {}).get("text_encoder", "clip")
+    if text_encoder not in {"clip", "phobert"}:
+        raise ValueError(
+            "embeddings.text_encoder must be 'clip' or 'phobert', "
+            f"got {text_encoder!r}"
         )
 
     top_k = cfg.get("retrieval", {}).get("top_k", 0)

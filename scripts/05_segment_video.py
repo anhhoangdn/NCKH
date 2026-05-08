@@ -70,6 +70,9 @@ def main() -> None:
     frame_paths = [r.get("frame_path", "") for r in meta_records]
     if not frame_paths:
         frame_paths = [""] * len(embeddings)
+    asr_by_frame = {
+        r.get("frame_idx", i): r.get("asr_text", "") for i, r in enumerate(meta_records)
+    }
 
     # Run segmentation
     segmenter = VideoSegmenter(cfg)
@@ -82,6 +85,17 @@ def main() -> None:
     # Add video_id
     for seg in segments:
         seg["video_id"] = args.video_id
+        if asr_by_frame:
+            parts: list[str] = []
+            last = None
+            for idx in seg.get("frame_indices", []):
+                text = asr_by_frame.get(idx, "")
+                if not text:
+                    continue
+                if text != last:
+                    parts.append(text)
+                    last = text
+            seg["transcript"] = " ".join(parts).strip()
 
     vid_dir = Path(args.out_dir) / args.video_id
     vid_dir.mkdir(parents=True, exist_ok=True)
