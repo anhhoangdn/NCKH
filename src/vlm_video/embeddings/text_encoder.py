@@ -66,6 +66,18 @@ class TextEncoder:
         self._phobert_model.to(self.device)
         self._phobert_model.eval()
 
+    @staticmethod
+    def _mean_pool(
+        hidden: torch.Tensor,
+        attention_mask: torch.Tensor | None,
+    ) -> torch.Tensor:
+        if attention_mask is None:
+            attention_mask = torch.ones(hidden.shape[:2], device=hidden.device)
+        mask = attention_mask.unsqueeze(-1).float()
+        summed = (hidden * mask).sum(dim=1)
+        counts = mask.sum(dim=1).clamp(min=1e-9)
+        return summed / counts
+
     def encode(self, text: str) -> np.ndarray:
         """Encode *text* to a 1-D float32 L2-normalised vector.
 
@@ -122,11 +134,7 @@ class TextEncoder:
         with torch.no_grad():
             outputs = self._phobert_model(**tokens)
         hidden = outputs.last_hidden_state
-        mask = tokens.get("attention_mask", torch.ones(hidden.shape[:2], device=hidden.device))
-        mask = mask.unsqueeze(-1).float()
-        summed = (hidden * mask).sum(dim=1)
-        counts = mask.sum(dim=1).clamp(min=1e-9)
-        pooled = summed / counts
+        pooled = self._mean_pool(hidden, tokens.get("attention_mask"))
         vec = pooled[0].detach().cpu().float().numpy().astype(np.float32)
         return _l2_normalize(vec)
 
@@ -146,11 +154,7 @@ class TextEncoder:
         with torch.no_grad():
             outputs = self._phobert_model(**tokens)
         hidden = outputs.last_hidden_state
-        mask = tokens.get("attention_mask", torch.ones(hidden.shape[:2], device=hidden.device))
-        mask = mask.unsqueeze(-1).float()
-        summed = (hidden * mask).sum(dim=1)
-        counts = mask.sum(dim=1).clamp(min=1e-9)
-        pooled = summed / counts
+        pooled = self._mean_pool(hidden, tokens.get("attention_mask"))
         vecs = pooled.detach().cpu().float().numpy()
         norms = np.linalg.norm(vecs, axis=1, keepdims=True)
         norms = np.where(norms < 1e-10, 1.0, norms)

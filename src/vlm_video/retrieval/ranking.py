@@ -6,6 +6,8 @@ import re
 from typing import Any
 
 KEYWORD_DIVISOR: float = 3.0
+SEMANTIC_WEIGHT: float = 0.6
+KEYWORD_WEIGHT: float = 0.4
 
 
 def _keyword_score(query_text: str, transcript: str) -> float:
@@ -50,7 +52,7 @@ def rerank_results(
         keyword_score = _keyword_score(query_text, transcript)
         entry["semantic_score"] = semantic_score
         entry["keyword_score"] = keyword_score
-        entry["score"] = 0.6 * semantic_score + 0.4 * keyword_score
+        entry["score"] = SEMANTIC_WEIGHT * semantic_score + KEYWORD_WEIGHT * keyword_score
         scored.append(entry)
 
     return sorted(scored, key=lambda r: r.get("score", 0.0), reverse=True)
