@@ -9,8 +9,9 @@ from pathlib import Path
 from vlm_video.common.io_jsonl import write_jsonl
 from vlm_video.common.logging_utils import get_logger
 from vlm_video.common.timestamp import format_timestamp
-from vlm_video.embeddings.text_encoder import TextEncoder
 from vlm_video.retrieval.index_factory import get_index
+from vlm_video.retrieval.llm_reranker import LLMReranker
+from vlm_video.retrieval.query_encoder import QueryEncoder, expand_query
 from vlm_video.retrieval.ranking import rerank_results
 
 logger = get_logger(__name__)
@@ -35,6 +36,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="If set, save retrieval results to this JSONL path",
     )
+    p.add_argument(
+        "--rerank",
+        action="store_true",
+        help="Enable LLM reranking with Anthropic Claude",
+    )
     return p.parse_args()
 
 
@@ -44,19 +50,16 @@ def main() -> None:
     from vlm_video.common.config import load_config
 
     cfg = load_config(args.config)
-    emb_cfg = cfg["embeddings"]
     ret_cfg = cfg["retrieval"]
     top_k = args.top_k if args.top_k is not None else ret_cfg.get("top_k", 5)
     backend = ret_cfg.get("backend", "sklearn")
+    use_rerank = bool(args.rerank or ret_cfg.get("use_llm_rerank", False))
 
     # Encode query
-    encoder = TextEncoder(
-        model_name=emb_cfg["model"],
-        pretrained=emb_cfg["pretrained"],
-        device=emb_cfg.get("device", "cpu"),
-    )
-    logger.info("Encoding query: %r", args.query)
-    query_emb = encoder.encode(args.query)
+    expanded_query = expand_query(args.query)
+    encoder = QueryEncoder()
+    logger.info("Encoding query: %r", expanded_query)
+    query_emb = encoder.encode(expanded_query)
 
     # Load index
     index_dir = Path(args.index_dir)
@@ -75,7 +78,10 @@ def main() -> None:
     if args.video_id:
         results = [r for r in results if r.get("video_id") == args.video_id]
 
-    results = rerank_results(results, query_text=args.query)
+    results = rerank_results(results, query_text=expanded_query)
+    if use_rerank:
+        reranker = LLMReranker()
+        results = reranker.rerank(expanded_query, results)
 
     # Pretty-print results
     print(f"\nQuery: {args.query!r}")
@@ -85,8 +91,9 @@ def main() -> None:
         end = res.get("end_time", 0.0)
         score = res.get("score", 0.0)
         vid = res.get("video_id", "?")
+        tag = " [reranked]" if use_rerank else ""
         print(
-            f"  [{rank}] score={score:.4f}  "
+            f"  [{rank}]{tag} score={score:.4f}  "
             f"{format_timestamp(start)} → {format_timestamp(end)}  "
             f"video={vid}"
         )

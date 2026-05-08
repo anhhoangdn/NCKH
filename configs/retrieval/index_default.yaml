@@ -6,3 +6,4 @@ retrieval:
   metric: "cosine"      # cosine | euclidean | dot
   top_k: 5
   normalize_embeddings: true
+  use_llm_rerank: false

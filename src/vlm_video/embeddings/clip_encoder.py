@@ -41,8 +41,8 @@ class CLIPEncoder:
 
     def __init__(
         self,
-        model_name: str = "ViT-B-32",
-        pretrained: str = "laion2b_s34b_b79k",
+        model_name: str = "ViT-L-14",
+        pretrained: str = "laion2b_s32b_b82k",
         device: str = "cpu",
     ) -> None:
         self.model_name = model_name

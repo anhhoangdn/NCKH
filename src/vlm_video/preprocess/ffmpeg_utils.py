@@ -38,7 +38,7 @@ def check_ffmpeg() -> bool:
 def extract_frames(
     video_path: str | Path,
     out_dir: str | Path,
-    fps: float = 0.5,
+    fps: float = 1.0,
 ) -> list[str]:
     """Extract frames from *video_path* at *fps* frames-per-second.
 
@@ -49,7 +49,7 @@ def extract_frames(
     out_dir:
         Directory where JPEG frames will be written.
     fps:
-        Extraction rate in frames per second (default: 0.5).
+        Extraction rate in frames per second (default: 1.0).
 
     Returns
     -------

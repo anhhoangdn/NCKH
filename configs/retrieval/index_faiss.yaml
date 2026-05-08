@@ -8,3 +8,4 @@ retrieval:
   nprobe: 10                  # number of cells to visit during search (IVF indexes)
   top_k: 5
   normalize_embeddings: true  # normalize before IndexFlatIP for cosine similarity
+  use_llm_rerank: false

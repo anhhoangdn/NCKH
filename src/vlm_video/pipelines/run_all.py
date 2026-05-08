@@ -13,6 +13,7 @@ from vlm_video.common.io_jsonl import read_jsonl, write_jsonl
 from vlm_video.common.logging_utils import get_logger
 from vlm_video.embeddings.clip_encoder import CLIPEncoder
 from vlm_video.embeddings.fusion import late_fusion
+from vlm_video.embeddings.text_encoder import TextEncoder
 from vlm_video.preprocess.asr_wrapper import WhisperASR
 from vlm_video.preprocess.ffmpeg_utils import extract_audio, extract_frames
 from vlm_video.retrieval.index_factory import get_index
@@ -105,6 +106,13 @@ class EndToEndPipeline:
             pretrained=emb_cfg["pretrained"],
             device=emb_cfg.get("device", "cpu"),
         )
+        text_encoder = TextEncoder(
+            encoder_type=emb_cfg.get("text_encoder", "clip"),
+            clip_encoder=encoder,
+            clip_model_name=emb_cfg["model"],
+            clip_pretrained=emb_cfg["pretrained"],
+            device=emb_cfg.get("device", "cpu"),
+        )
         w = emb_cfg["weights"]
         wv, wt = w["visual"], w["text"]
 
@@ -121,7 +129,7 @@ class EndToEndPipeline:
                 if seg.get("start", 0) <= t <= seg.get("end", 0):
                     text = seg.get("text", "")
                     break
-            txt_emb = encoder.encode_text(text) if text else None
+            txt_emb = text_encoder.encode(text) if text else None
             fused = late_fusion(vis, txt_emb, None, wv, wt, 0.0)
             emb_list.append(fused)
             emb_meta.append({"frame_idx": i, "timestamp_sec": t, "asr_text": text})
