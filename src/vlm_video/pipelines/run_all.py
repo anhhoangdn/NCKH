@@ -151,7 +151,8 @@ class EndToEndPipeline:
             [s["embedding"] for s in segments], dtype=np.float32
         )
         seg_meta = [
-            {k: v for k, v in s.items() if k != "embedding"} for s in segments
+            {**{k: v for k, v in s.items() if k != "embedding"}, "segment_id": i}
+            for i, s in enumerate(segments)
         ]
 
         backend = self.cfg["retrieval"]["backend"]
