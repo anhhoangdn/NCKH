@@ -39,7 +39,7 @@ embeddings:
 # ── Segmentation ─────────────────────────────────────────────────────────────
 segmentation:
   method: "clip_latefusion"    # clip_latefusion | text_only | fixed_window | shot_change
-  threshold: 0.4               # cosine-change threshold for boundary detection
+  segmentation_method: "threshold" # threshold | pelt
   adaptive_percentile: 85      # percentile for adaptive threshold
   min_duration: 5              # minimum segment duration in seconds
   min_segment_duration: 30     # merge segments shorter than this (seconds)

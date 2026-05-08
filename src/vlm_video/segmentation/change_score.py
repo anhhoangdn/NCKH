@@ -6,19 +6,24 @@ import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 
 
-def cosine_change_score(embeddings: np.ndarray) -> np.ndarray:
-    """Compute per-frame cosine change scores.
+def cosine_change_score(embeddings: np.ndarray, window: int = 5) -> np.ndarray:
+    """Compute per-frame cosine change scores using windowed means.
 
-    The change score at position *t* is defined as::
+    The change score at position *t* compares the mean embeddings in two windows::
 
-        d_t = 1 - cosine_similarity(e_t, e_{t-1})
+        left  = mean(embeddings[t - w : t])
+        right = mean(embeddings[t : t + w])
+        d_t   = 1 - cosine_similarity(left, right)
 
-    The first score (index 0) is set to 0 because there is no previous frame.
+    Scores are only computed for indices with full windows.  Other positions are
+    set to 0.
 
     Parameters
     ----------
     embeddings:
         Array of shape ``(T, D)`` containing L2-normalised frame embeddings.
+    window:
+        Window size *w* for the mean comparison.
 
     Returns
     -------
@@ -27,16 +32,26 @@ def cosine_change_score(embeddings: np.ndarray) -> np.ndarray:
     """
     if embeddings.ndim != 2:
         raise ValueError(f"embeddings must be 2-D (T × D), got shape {embeddings.shape}")
+    if window < 1:
+        raise ValueError(f"window must be >= 1, got {window}")
 
-    T = embeddings.shape[0]
+    T, dim = embeddings.shape
     scores = np.zeros(T, dtype=np.float32)
-    if T < 2:
+    if T < 2 * window:
         return scores
 
-    # Dot product of consecutive L2-normalised vectors = cosine similarity
-    cos_sim = np.einsum("td,td->t", embeddings[1:], embeddings[:-1])
+    cumsum = np.zeros((T + 1, dim), dtype=np.float64)
+    cumsum[1:] = np.cumsum(embeddings, axis=0)
+
+    idx = np.arange(window, T - window + 1)
+    left = (cumsum[idx] - cumsum[idx - window]) / float(window)
+    right = (cumsum[idx + window] - cumsum[idx]) / float(window)
+
+    dot = np.einsum("nd,nd->n", left, right)
+    denom = np.linalg.norm(left, axis=1) * np.linalg.norm(right, axis=1)
+    cos_sim = np.divide(dot, denom, out=np.zeros_like(dot), where=denom > 1e-10)
     cos_sim = np.clip(cos_sim, -1.0, 1.0)
-    scores[1:] = 1.0 - cos_sim
+    scores[idx] = 1.0 - cos_sim
     return scores
 
 

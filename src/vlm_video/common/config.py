@@ -32,7 +32,7 @@ _DEFAULTS: dict[str, Any] = {
     },
     "segmentation": {
         "method": "clip_latefusion",
-        "threshold": 0.4,
+        "segmentation_method": "threshold",
         "adaptive_percentile": 85,
         "min_duration": 5,
         "min_segment_duration": 30,
@@ -110,8 +110,15 @@ def validate_config(cfg: dict[str, Any]) -> None:
     if top_k < 1:
         raise ValueError(f"retrieval.top_k must be >= 1, got {top_k}")
 
-    threshold = cfg.get("segmentation", {}).get("threshold", -1)
-    if not (0.0 <= threshold <= 1.0):
+    segmentation_method = cfg.get("segmentation", {}).get("segmentation_method", "threshold")
+    if segmentation_method not in {"threshold", "pelt"}:
+        raise ValueError(
+            "segmentation.segmentation_method must be 'threshold' or 'pelt', "
+            f"got {segmentation_method}"
+        )
+
+    threshold = cfg.get("segmentation", {}).get("threshold")
+    if threshold is not None and not (0.0 <= threshold <= 1.0):
         raise ValueError(f"segmentation.threshold must be in [0, 1], got {threshold}")
 
 
