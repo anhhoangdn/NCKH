@@ -26,23 +26,30 @@ def fixed_threshold(scores: np.ndarray, threshold: float) -> list[int]:
     return [int(i) for i in np.where(scores > threshold)[0]]
 
 
-def otsu_threshold(scores: np.ndarray) -> list[int]:
+def otsu_threshold(scores: np.ndarray) -> tuple[list[int], float, bool]:
     """Return frame indices where the score exceeds an Otsu-derived threshold.
 
-    Falls back to mean + 0.5 * std if Otsu computation fails.
+    Returns
+    -------
+    tuple
+        ``(boundaries, threshold, used_fallback)`` where *threshold* is the
+        adaptive value used and *used_fallback* indicates whether the mean/std
+        fallback was applied.
     """
     if len(scores) == 0:
-        return []
+        return [], float("nan"), False
+    used_fallback = False
     try:
         from skimage.filters import threshold_otsu
 
         thresh = float(threshold_otsu(scores))
-        if np.isnan(thresh):
-            raise ValueError("Otsu threshold returned NaN.")
+        if not np.isfinite(thresh):
+            raise ValueError("Otsu threshold returned invalid value.")
     except Exception:
+        used_fallback = True
         thresh = float(np.mean(scores) + 0.5 * np.std(scores))
 
-    return fixed_threshold(scores, threshold=thresh)
+    return fixed_threshold(scores, threshold=thresh), thresh, used_fallback
 
 
 def adaptive_threshold(scores: np.ndarray, percentile: float = 85) -> list[int]:

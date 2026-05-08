@@ -34,7 +34,10 @@ class VideoSegmenter:
         self.cfg = config
         seg_cfg = config.get("segmentation", {})
         self.method: str = seg_cfg.get("method", "clip_latefusion")
-        self.threshold: float = seg_cfg.get("threshold", 0.4)
+        self.segmentation_method: str = config.get(
+            "segmentation_method",
+            seg_cfg.get("segmentation_method", "threshold"),
+        )
         self.adaptive_percentile: float = seg_cfg.get("adaptive_percentile", 85)
         self.min_duration: float = seg_cfg.get("min_duration", 5)
         self.min_segment_duration: float = seg_cfg.get("min_segment_duration", 30)
@@ -101,14 +104,36 @@ class VideoSegmenter:
         embeddings: np.ndarray,
         timestamps: list[float],
     ) -> list[int]:
-        scores = cosine_change_score(embeddings)
+        if self.segmentation_method == "pelt":
+            boundaries = self._pelt_boundaries(embeddings)
+            boundaries = enforce_min_duration(boundaries, timestamps, self.min_duration)
+            return boundaries
+
+        scores = cosine_change_score(embeddings, window=5)
         scores = smooth_scores(scores, window=self.smooth_window)
         scores = gaussian_filter1d(scores, sigma=2)
 
-        boundaries = otsu_threshold(scores)
+        boundaries, thresh, used_fallback = otsu_threshold(scores)
+        if np.isfinite(thresh):
+            if used_fallback:
+                logger.info("Otsu threshold fallback: %.6f", thresh)
+            else:
+                logger.info("Otsu threshold: %.6f", thresh)
+        else:
+            logger.info("Otsu threshold unavailable for empty scores.")
 
         boundaries = enforce_min_duration(boundaries, timestamps, self.min_duration)
         return boundaries
+
+    @staticmethod
+    def _pelt_boundaries(embeddings: np.ndarray, penalty: float = 10.0) -> list[int]:
+        try:
+            import ruptures as rpt
+        except ImportError as exc:
+            raise RuntimeError("ruptures is required for PELT segmentation.") from exc
+
+        bkps = rpt.Pelt(model="rbf").fit(embeddings).predict(pen=penalty)
+        return [int(b) for b in bkps if b < embeddings.shape[0]]
 
     def segment(
         self,

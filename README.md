@@ -181,7 +181,7 @@ a custom YAML and passing `--config your_config.yaml` to any script.
 | `embeddings` | `model` | `ViT-B-32` | CLIP architecture |
 | `embeddings` | `weights.visual` | `0.6` | Visual modality weight |
 | `segmentation` | `method` | `clip_latefusion` | Segmentation algorithm |
-| `segmentation` | `threshold` | `0.4` | Cosine change threshold |
+| `segmentation` | `segmentation_method` | `threshold` | Boundary detection method (`threshold` or `pelt`) |
 | `retrieval` | `backend` | `sklearn` | `sklearn` or `faiss` |
 | `retrieval` | `top_k` | `5` | Results to return |
 
