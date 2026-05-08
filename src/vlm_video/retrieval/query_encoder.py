@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Dict
-
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-_OOP_EQUIVALENTS: Dict[str, str] = {
+_OOP_EQUIVALENTS: dict[str, str] = {
     "encapsulation": "encapsulation đóng gói",
     "inheritance": "inheritance kế thừa",
     "polymorphism": "polymorphism đa hình",
